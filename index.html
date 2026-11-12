@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Sfinsys Gold Rates & Jewellery Cost Estimator">
+
+    <!-- Dynamic Android PWA Manifest (Single-File Compatible) -->
+    <link rel="manifest" id="pwa-manifest">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23f59e0b'/%3E%3Ctext x='50' y='66' font-size='52' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%230f172a'%3E₹%3C/text%3E%3C/svg%3E">
+
+    <title>Sfinsys Gold</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Roboto', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif']
+                    },
+                    colors: {
+                        gold: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Android Native Feel & Gesture Controls */
+        html, body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            overscroll-behavior-y: contain;
+            touch-action: manipulation;
+            background-color: #090d16;
+            color: #f8fafc;
+            user-select: none;
+        }
+
+        /* Allow text selection inside inputs and voucher */
+        input, textarea, #printableVoucherModal {
+            user-select: text;
+        }
+
+        /* Prevent Android Chrome auto-zoom on input focus */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+
+        /* Android Material 48dp Minimum Touch Targets */
+        .touch-target {
+            min-height: 48px;
+            min-width: 48px;
+        }
+
+        /* Safe Area Insets for Android Gesture Bar & Camera Cutouts */
+        .pt-safe {
+            padding-top: max(0.75rem, env(safe-area-inset-top));
+        }
+        .pb-safe-nav {
+            padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+        }
+        .bottom-nav-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Hide Number Input Spinners */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Smooth Horizontal Scroll Pills without visible scrollbar */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Android Bottom Sheet Animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0.5; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-sheet {
+            animation: slideUp 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #printableVoucherModal, #printableVoucherModal * { visibility: visible; }
+            #printableVoucherModal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-gold-500 selection:text-slate-950">
+
+    <!-- ANDROID APP BAR (TOP) -->
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 pt-safe pb-3 px-4 shadow-md">
+        <div class="max-w-3xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-gold-400 to-amber-600 flex items-center justify-center shadow-md shadow-gold-500/20 text-slate-950 font-black text-lg">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg font-bold tracking-tight text-white">Sfinsys Gold</h1>
+                        <span class="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold px-2 py-0.5 rounded-full uppercase">Live</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="lastUpdatedHeader">Updated: Today</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Install PWA Button (Shows automatically on Android Chrome when installable) -->
+                <button id="installAppBtn" onclick="triggerInstallPWA()" class="hidden touch-target px-3 rounded-xl bg-gold-500/15 text-gold-400 border border-gold-500/30 text-xs font-bold items-center gap-1.5 active:scale-95 transition-transform">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Install</span>
+                </button>
+
+                <!-- Sync Rates Button -->
+                <button onclick="haptic(); fetchRatesFromGithub()" aria-label="Sync Rates" class="touch-target px-3 rounded-xl bg-slate-800 active:bg-slate-700 text-slate-200 border border-slate-700/80 flex items-center justify-center gap-1.5 text-xs font-semibold active:scale-95 transition-transform">
+                    <i class="fa-solid fa-rotate text-gold-400" id="syncIcon"></i>
+                    <span class="hidden sm:inline">Sync</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN SCROLLABLE CONTENT -->
+    <main class="flex-grow max-w-3xl w-full mx-auto px-3.5 pt-4 pb-safe-nav space-y-5">
+
+        <!-- TAB VIEW 1: LIVE RATES & ESTIMATOR (DEFAULT MOBILE VIEW) -->
+        <div id="view-home" class="space-y-5">
+
+            <!-- COMPACT SWIPEABLE / GRID GOLD RATE CARDS -->
+            <section aria-label="Today's Gold Rates">
+                <div class="flex items-center justify-between mb-2.5 px-0.5">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-line text-gold-400"></i> Today's Market Rates (INR)
+                    </h2>
+                    <span class="text-[11px] text-slate-500">Tap card to select purity</span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2.5">
+                    <!-- 24K Card -->
+                    <button type="button" onclick="haptic(); setPurity('24K')" class="text-left bg-gradient-to-b from-slate-800/90 to-slate-900 border border-gold-500/40 rounded-2xl p-3 relative overflow-hidden active:scale-95 transition-transform shadow-md">
+                        <span class="text-[10px] font-extrabold uppercase text-gold-400 bg-gold-500/10 px-1.5 py-0.5 rounded">24K • 999</span>
+                        <div class="text-lg sm:text-2xl font-black text-white mt-2 tracking-tight">
+                            ₹<span id="rate24k">7,450</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">8g: ₹<span id="rate24k-8g">59,600</span></div>
+                    </button>
+
+                    <!-- 22K Card -->
+                    <button type="button" onclick="haptic(); setPurity('22K')" class="text-left bg-gradient-to-b from-slate-800/90 to-slate-900 border border-amber-500/50 rounded-2xl p-3 relative overflow-hidden active:scale-95 transition-transform shadow-md">
+                        <span class="text-[10px] font-extrabold uppercase text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">22K • 916</span>
+                        <div class="text-lg sm:text-2xl font-black text-white mt-2 tracking-tight">
+                            ₹<span id="rate22k">6,830</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">8g: ₹<span id="rate22k-8g">54,640</span></div>
+                    </button>
+
+                    <!-- 18K Card -->
+                    <button type="button" onclick="haptic(); setPurity('18K')" class="text-left bg-gradient-to-b from-slate-800/90 to-slate-900 border border-slate-700 rounded-2xl p-3 relative overflow-hidden active:scale-95 transition-transform shadow-md">
+                        <span class="text-[10px] font-extrabold uppercase text-slate-300 bg-slate-700/50 px-1.5 py-0.5 rounded">18K • 750</span>
+                        <div class="text-lg sm:text-2xl font-black text-white mt-2 tracking-tight">
+                            ₹<span id="rate18k">5,590</span>
+                        </div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">8g: ₹<span id="rate18k-8g">44,720</span></div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- JEWELLERY ESTIMATOR CARD -->
+            <section class="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-calculator text-gold-400"></i> Ornament Estimator
+                        </h2>
+                        <p class="text-[11px] text-slate-400">Rate Applied: <strong class="text-gold-400">₹<span id="currentPurityRate">6,830</span>/g</strong></p>
+                    </div>
+                    <button onclick="haptic(); resetEstimator()" class="touch-target px-3 rounded-xl bg-slate-800 active:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate"></i> Reset
+                    </button>
+                </div>
+
+                <!-- 1. Purity Selector -->
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">1. Gold Purity</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="haptic(); setPurity('22K')" id="purityBtn-22K" class="touch-target rounded-2xl border text-sm font-bold flex flex-col items-center justify-center transition-all bg-amber-500/20 border-amber-500 text-amber-300">
+                            <span>22K</span>
+                            <span class="text-[10px] font-normal opacity-80">91.6%</span>
+                        </button>
+                        <button type="button" onclick="haptic(); setPurity('24K')" id="purityBtn-24K" class="touch-target rounded-2xl border border-slate-700 bg-slate-800/80 text-slate-300 text-sm font-bold flex flex-col items-center justify-center transition-all">
+                            <span>24K</span>
+                            <span class="text-[10px] font-normal opacity-80">99.9%</span>
+                        </button>
+                        <button type="button" onclick="haptic(); setPurity('18K')" id="purityBtn-18K" class="touch-target rounded-2xl border border-slate-700 bg-slate-800/80 text-slate-300 text-sm font-bold flex flex-col items-center justify-center transition-all">
+                            <span>18K</span>
+                            <span class="text-[10px] font-normal opacity-80">75.0%</span>
+                        </button>
+                        <button type="button" onclick="haptic(); setPurity('14K')" id="purityBtn-14K" class="touch-target rounded-2xl border border-slate-700 bg-slate-800/80 text-slate-300 text-sm font-bold flex flex-col items-center justify-center transition-all">
+                            <span>14K</span>
+                            <span class="text-[10px] font-normal opacity-80">58.5%</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Net Weight (Grams) -->
+                <div>
+                    <label for="netWeight" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">2. Net Weight (Grams)</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="haptic(); addWeight(-1)" aria-label="Decrease 1 gram" class="touch-target w-12 rounded-2xl bg-slate-800 active:bg-slate-700 border border-slate-700 text-white font-bold text-lg flex items-center justify-center">−</button>
+                        <div class="relative flex-1">
+                            <input type="number" id="netWeight" value="8.00" step="0.01" min="0.01" inputmode="decimal" oninput="calculateEstimate()" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-4 text-center text-white font-black text-lg focus:outline-none focus:border-gold-500">
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-500">g</span>
+                        </div>
+                        <button type="button" onclick="haptic(); addWeight(1)" aria-label="Increase 1 gram" class="touch-target w-12 rounded-2xl bg-slate-800 active:bg-slate-700 border border-slate-700 text-white font-bold text-lg flex items-center justify-center">+</button>
+                    </div>
+
+                    <!-- Swipeable Horizontal Weight Chips -->
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pt-2.5 pb-1">
+                        <button type="button" onclick="haptic(); setWeight(1)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800/90 active:bg-gold-500/20 border border-slate-700 text-xs font-semibold text-slate-200">1g</button>
+                        <button type="button" onclick="haptic(); setWeight(4)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800/90 active:bg-gold-500/20 border border-slate-700 text-xs font-semibold text-slate-200">4g (½ Pav)</button>
+                        <button type="button" onclick="haptic(); setWeight(8)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800/90 active:bg-gold-500/20 border border-slate-700 text-xs font-semibold text-gold-400">8g (1 Pav)</button>
+                        <button type="button" onclick="haptic(); setWeight(10)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800/90 active:bg-gold-500/20 border border-slate-700 text-xs font-semibold text-slate-200">10g</button>
+                        <button type="button" onclick="haptic(); setWeight(16)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800/90 active:bg-gold-500/20 border border-slate-700 text-xs font-semibold text-slate-200">16g (2 Pav)</button>
+                        <button type="button" onclick="haptic(); setWeight(24)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800/90 active:bg-gold-500/20 border border-slate-700 text-xs font-semibold text-slate-200">24g (3 Pav)</button>
+                        <button type="button" onclick="haptic(); setWeight(40)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800/90 active:bg-gold-500/20 border border-slate-700 text-xs font-semibold text-slate-200">40g (5 Pav)</button>
+                    </div>
+                </div>
+
+                <!-- 3. Making Charges -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400">3. Making Charges</label>
+                        <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+                            <button type="button" onclick="haptic(); setMakingType('percent')" id="makingTypePercent" class="min-h-[34px] text-xs px-3 rounded-lg font-bold bg-gold-500 text-slate-950 transition-all">% Percent</button>
+                            <button type="button" onclick="haptic(); setMakingType('perGram')" id="makingTypePerGram" class="min-h-[34px] text-xs px-3 rounded-lg font-bold text-slate-400 transition-all">₹ / Gram</button>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <input type="number" id="makingValue" value="8" step="0.1" min="0" inputmode="decimal" oninput="calculateEstimate()" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-4 text-white font-bold focus:outline-none focus:border-gold-500">
+                        <span id="makingUnitLabel" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+                    </div>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pt-2.5">
+                        <button type="button" onclick="haptic(); setMakingVal(5)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">5%</button>
+                        <button type="button" onclick="haptic(); setMakingVal(8)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">8%</button>
+                        <button type="button" onclick="haptic(); setMakingVal(10)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">10%</button>
+                        <button type="button" onclick="haptic(); setMakingVal(12)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">12%</button>
+                        <button type="button" onclick="haptic(); setMakingVal(15)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">15%</button>
+                    </div>
+                </div>
+
+                <!-- 4. Wastage (VA %) -->
+                <div>
+                    <label for="wastagePercent" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">4. Wastage / VA (%)</label>
+                    <div class="relative">
+                        <input type="number" id="wastagePercent" value="2" step="0.1" min="0" inputmode="decimal" oninput="calculateEstimate()" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-4 text-white font-bold focus:outline-none focus:border-gold-500">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+                    </div>
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pt-2.5">
+                        <button type="button" onclick="haptic(); setWastageVal(0)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">0%</button>
+                        <button type="button" onclick="haptic(); setWastageVal(2)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">2%</button>
+                        <button type="button" onclick="haptic(); setWastageVal(3)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">3%</button>
+                        <button type="button" onclick="haptic(); setWastageVal(5)" class="shrink-0 min-h-[40px] px-3.5 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">5%</button>
+                    </div>
+                </div>
+
+                <!-- 5. Stones & Hallmark Fee -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="stoneCharges" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Stone / Beads (₹)</label>
+                        <input type="number" id="stoneCharges" value="0" step="50" min="0" inputmode="numeric" oninput="calculateEstimate()" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-3.5 text-white font-bold focus:outline-none focus:border-gold-500">
+                    </div>
+                    <div>
+                        <label for="hallmarkFee" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Hallmark Fee (₹)</label>
+                        <input type="number" id="hallmarkFee" value="45" step="5" min="0" inputmode="numeric" oninput="calculateEstimate()" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-3.5 text-white font-bold focus:outline-none focus:border-gold-500">
+                    </div>
+                </div>
+
+                <!-- 6. GST Controls -->
+                <div class="bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-200 flex items-center gap-1.5">
+                            <i class="fa-solid fa-percent text-gold-400"></i> GST Settings
+                        </span>
+                        <label class="relative inline-flex items-center cursor-pointer min-h-[36px]">
+                            <input type="checkbox" id="gstToggle" checked onchange="haptic(); calculateEstimate()" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[8px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            <span class="ml-2 text-xs font-bold text-emerald-400" id="gstToggleLabel">On</span>
+                        </label>
+                    </div>
+
+                    <div id="gstControlsBox" class="space-y-2.5 pt-2 border-t border-slate-800">
+                        <div class="flex items-center gap-2.5">
+                            <label for="customGstRate" class="text-xs text-slate-400 font-medium shrink-0">GST Rate (%):</label>
+                            <input type="number" id="customGstRate" value="3.0" step="0.5" min="0" max="100" inputmode="decimal" oninput="calculateEstimate()" class="w-full min-h-[44px] bg-slate-900 border border-slate-700 rounded-xl px-3 text-white font-bold focus:outline-none focus:border-gold-500">
+                        </div>
+                        <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
+                            <button type="button" onclick="haptic(); setGstRate(0)" class="shrink-0 min-h-[38px] px-3 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">0%</button>
+                            <button type="button" onclick="haptic(); setGstRate(3)" class="shrink-0 min-h-[38px] px-3 rounded-xl bg-slate-800 border border-gold-500/40 text-xs font-bold text-gold-400">3% Std</button>
+                            <button type="button" onclick="haptic(); setGstRate(5)" class="shrink-0 min-h-[38px] px-3 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">5%</button>
+                            <button type="button" onclick="haptic(); setGstRate(12)" class="shrink-0 min-h-[38px] px-3 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">12%</button>
+                            <button type="button" onclick="haptic(); setGstRate(18)" class="shrink-0 min-h-[38px] px-3 rounded-xl bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">18%</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ITEMIZED BILL SUMMARY CARD -->
+            <section id="summarySection" class="bg-gradient-to-b from-slate-900 to-slate-950 border border-gold-500/30 rounded-3xl p-4 sm:p-5 shadow-2xl space-y-4">
+                <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                    <div>
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-gold-400">Itemized Breakdown</span>
+                        <h3 class="text-base font-bold text-white">Estimate Summary</h3>
+                    </div>
+                    <span class="text-xs font-bold bg-slate-800 text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700">
+                        <span id="sumPurity">22K</span> • <span id="sumWeight">8.00</span>g
+                    </span>
+                </div>
+
+                <div class="space-y-2.5 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Base Metal Value</span>
+                        <span class="font-semibold text-slate-100">₹<span id="sumBaseValue">54,640</span></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Making Charges (<span id="sumMakingLabel">8%</span>)</span>
+                        <span class="font-semibold text-slate-100">₹<span id="sumMakingAmount">4,371</span></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Wastage / VA (<span id="sumWastageLabel">2%</span>)</span>
+                        <span class="font-semibold text-slate-100">₹<span id="sumWastageAmount">1,093</span></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Stones / Extra Beads</span>
+                        <span class="font-semibold text-slate-100">₹<span id="sumStoneAmount">0</span></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Hallmark Fee</span>
+                        <span class="font-semibold text-slate-100">₹<span id="sumHallmarkAmount">45</span></span>
+                    </div>
+                    <div class="border-t border-slate-800 pt-2.5 flex justify-between font-bold">
+                        <span class="text-slate-300">Subtotal (Pre-Tax)</span>
+                        <span class="text-white">₹<span id="sumSubtotal">60,149</span></span>
+                    </div>
+                    <div class="flex justify-between items-center text-emerald-400 bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-500/20">
+                        <span class="font-semibold text-xs">GST (<span id="sumGstLabel">3%</span>)</span>
+                        <span class="font-bold">₹<span id="sumGstAmount">1,804</span></span>
+                    </div>
+                </div>
+
+                <!-- Grand Total Highlight -->
+                <div class="bg-gradient-to-r from-gold-500 to-amber-500 text-slate-950 p-4 rounded-2xl shadow-lg">
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider opacity-85 block">Final Estimated Price</span>
+                    <div class="text-3xl font-black tracking-tight">₹<span id="sumGrandTotal">61,953</span></div>
+                </div>
+
+                <!-- Mobile Action Buttons -->
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <button type="button" onclick="haptic(); openPrintModal()" class="touch-target rounded-2xl bg-slate-800 active:bg-slate-700 text-white font-bold text-sm border border-slate-700 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-invoice text-gold-400"></i>
+                        <span>Voucher / PDF</span>
+                    </button>
+                    <button type="button" onclick="haptic(); shareQuoteNative()" class="touch-target rounded-2xl bg-emerald-600 active:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20">
+                        <i class="fa-solid fa-share-nodes"></i>
+                        <span>Share Quote</span>
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB VIEW 2: BUYING & PURITY GUIDE -->
+        <div id="view-guide" class="hidden space-y-4">
+            <div class="px-1">
+                <h2 class="text-lg font-bold text-white">Gold Buying & Purity Guide</h2>
+                <p class="text-xs text-slate-400">Essential standards for smart jewellery purchases</p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+                <div class="flex items-center gap-2.5 text-gold-400 font-bold text-sm">
+                    <i class="fa-solid fa-stamp"></i>
+                    <span>BIS 6-Digit HUID Hallmark</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Verify the mandatory BIS triangle logo, purity grade (e.g., 22K916), and unique 6-character alphanumeric HUID code using the official BIS Care Android app before buying.
+                </p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+                <div class="flex items-center gap-2.5 text-amber-400 font-bold text-sm">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <span>Karat & Fineness Standards</span>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                    <li>• <strong class="text-white">24K (999):</strong> 99.9% pure gold used for investment coins and bars.</li>
+                    <li>• <strong class="text-white">22K (916):</strong> 91.6% gold alloyed for strength; standard for traditional ornaments.</li>
+                    <li>• <strong class="text-white">18K (750):</strong> 75.0% gold; preferred for diamond-studded jewellery.</li>
+                    <li>• <strong class="text-white">14K (585):</strong> 58.5% gold; durable for everyday lightweight wear.</li>
+                </ul>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+                <div class="flex items-center gap-2.5 text-emerald-400 font-bold text-sm">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                    <span>Making Charges & Wastage (VA)</span>
+                </div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Making charges cover artisan labor, while Value Addition (VA) accounts for gold lost during crafting. Always check net gold weight excluding stone weight.
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ANDROID BOTTOM NAVIGATION BAR (THUMB-ZONE) -->
+    <nav class="fixed bottom-0 inset-x-0 z-40 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800/90 bottom-nav-safe">
+        <div class="max-w-3xl mx-auto grid grid-cols-4 h-16">
+            <button type="button" onclick="haptic(); switchMainTab('home')" id="nav-home" class="flex flex-col items-center justify-center gap-1 text-gold-400 font-bold">
+                <i class="fa-solid fa-calculator text-lg"></i>
+                <span class="text-[10px]">Estimator</span>
+            </button>
+            <button type="button" onclick="haptic(); scrollToSummary()" id="nav-bill" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white">
+                <div class="relative">
+                    <i class="fa-solid fa-receipt text-lg"></i>
+                    <span class="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-emerald-400"></span>
+                </div>
+                <span class="text-[10px] font-bold text-emerald-400" id="navTotalBadge">₹61,953</span>
+            </button>
+            <button type="button" onclick="haptic(); switchMainTab('guide')" id="nav-guide" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-book-open text-lg"></i>
+                <span class="text-[10px]">Guide</span>
+            </button>
+            <button type="button" onclick="haptic(); openAdminModal()" id="nav-admin" class="flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-user-gear text-lg"></i>
+                <span class="text-[10px]">Admin</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ANDROID BOTTOM-SHEET: ADMIN LOGIN MODAL -->
+    <div id="adminLoginModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center">
+        <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-sheet">
+            <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-2 sm:hidden"></div>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gold-500/20 text-gold-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">Admin Login</h3>
+                        <p class="text-xs text-slate-400">Manage daily gold rates</p>
+                    </div>
+                </div>
+                <button onclick="closeAdminModal()" class="touch-target text-slate-400 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Username</label>
+                    <input type="text" id="adminUser" required value="admin" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-4 text-white focus:border-gold-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Password</label>
+                    <input type="password" id="adminPass" required value="sfinsys2026" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-4 text-white focus:border-gold-500 focus:outline-none">
+                </div>
+                <div id="loginError" class="text-xs text-rose-400 hidden font-semibold">Invalid credentials!</div>
+
+                <button type="submit" class="w-full touch-target bg-gold-500 active:bg-gold-400 text-slate-950 font-bold rounded-2xl shadow-md">
+                    Unlock Control Panel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ANDROID BOTTOM-SHEET: ADMIN CONTROL PANEL -->
+    <div id="adminPanelModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center overflow-y-auto">
+        <div class="bg-slate-900 border-t sm:border border-slate-800 rounded-t-3xl sm:rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-5 animate-sheet max-h-[90vh] overflow-y-auto">
+            <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto sm:hidden"></div>
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="text-base font-bold text-white">Sfinsys Admin Panel</h3>
+                    <p class="text-[11px] text-slate-400">Update local rates or sync GitHub</p>
+                </div>
+                <button onclick="closeAdminPanel()" class="touch-target text-slate-400 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-2xl border border-slate-800 text-xs font-bold">
+                <button onclick="switchAdminTab('rates')" id="tabBtn-rates" class="min-h-[40px] rounded-xl bg-gold-500 text-slate-950">Daily Rates</button>
+                <button onclick="switchAdminTab('github')" id="tabBtn-github" class="min-h-[40px] rounded-xl text-slate-400">GitHub Sync</button>
+            </div>
+
+            <!-- Tab 1: Rates -->
+            <div id="tabContent-rates" class="space-y-4">
+                <div class="grid grid-cols-3 gap-2.5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-300 mb-1">24K (₹/g)</label>
+                        <input type="number" id="edit24k" min="1000" inputmode="decimal" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-3 text-white font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-300 mb-1">22K (₹/g)</label>
+                        <input type="number" id="edit22k" min="1000" inputmode="decimal" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-3 text-white font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-300 mb-1">18K (₹/g)</label>
+                        <input type="number" id="edit18k" min="1000" inputmode="decimal" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-3 text-white font-bold">
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2.5 pt-1">
+                    <button onclick="haptic(); autoCalculateKaratRates()" class="touch-target w-full text-xs px-4 bg-slate-800 active:bg-slate-700 text-slate-200 border border-slate-700 rounded-2xl font-semibold">
+                        Auto-Calculate 22K & 18K from 24K
+                    </button>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button onclick="haptic(); saveLocalRates()" class="touch-target text-xs px-4 bg-gold-500 active:bg-gold-400 text-slate-950 font-bold rounded-2xl shadow-md">
+                            Save & Apply
+                        </button>
+                        <button onclick="haptic(); downloadRatesJson()" class="touch-target text-xs px-4 bg-slate-800 active:bg-slate-700 text-emerald-400 border border-slate-700 rounded-2xl font-semibold flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> rates.json
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: GitHub Sync -->
+            <div id="tabContent-github" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">GitHub PAT Token</label>
+                    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-3 text-white text-xs font-mono">
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Owner</label>
+                        <input type="text" id="ghOwner" placeholder="sfinsys" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-3 text-white text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Repo Name</label>
+                        <input type="text" id="ghRepo" placeholder="gold-rates" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-3 text-white text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">File Path</label>
+                    <input type="text" id="ghPath" value="rates.json" class="w-full touch-target bg-slate-950 border border-slate-700 rounded-2xl px-3 text-white text-xs">
+                </div>
+
+                <div id="ghSyncStatus" class="text-xs p-3 rounded-2xl bg-slate-950 border border-slate-800 hidden"></div>
+
+                <div class="grid grid-cols-2 gap-2.5 pt-1">
+                    <button onclick="haptic(); pushRatesToGithub()" class="touch-target px-3 bg-emerald-600 active:bg-emerald-500 text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Push Live
+                    </button>
+                    <button onclick="haptic(); saveGithubSettings()" class="touch-target px-3 bg-slate-800 text-slate-300 border border-slate-700 font-semibold text-xs rounded-2xl">
+                        Save Config
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINTABLE VOUCHER MODAL -->
+    <div id="printableVoucherModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+        <div class="bg-white text-slate-900 rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl space-y-5 animate-sheet max-h-[92vh] overflow-y-auto">
+            <div class="border-b-2 border-slate-900 pb-3 flex justify-between items-start">
+                <div>
+                    <h2 class="text-xl font-black tracking-tight text-slate-900">SFINSYS JEWELLERS</h2>
+                    <p class="text-[11px] text-slate-600">Official Jewellery Purchase Estimate</p>
+                </div>
+                <div class="text-right text-[11px] text-slate-600">
+                    <p class="font-bold text-slate-900" id="vouchId">SFIN-8942</p>
+                    <p id="vouchDate">12-Nov-2026</p>
+                    <p id="vouchTime">10:30 AM</p>
+                </div>
+            </div>
+
+            <table class="w-full text-xs text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-300 text-slate-700 uppercase">
+                        <th class="py-2">Description</th>
+                        <th class="py-2 text-right">Details</th>
+                        <th class="py-2 text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    <tr>
+                        <td class="py-2">Gold Rate</td>
+                        <td class="py-2 text-right" id="vouchPurityRate">22K @ ₹6,830/g</td>
+                        <td class="py-2 text-right">-</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2">Net Weight</td>
+                        <td class="py-2 text-right" id="vouchWeight">8.00g</td>
+                        <td class="py-2 text-right font-semibold" id="vouchBaseVal">₹54,640</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2">Making Charges</td>
+                        <td class="py-2 text-right" id="vouchMakingLabel">8%</td>
+                        <td class="py-2 text-right font-semibold" id="vouchMakingVal">₹4,371</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2">Wastage / VA</td>
+                        <td class="py-2 text-right" id="vouchWastageLabel">2%</td>
+                        <td class="py-2 text-right font-semibold" id="vouchWastageVal">₹1,093</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2">Stones / Beads</td>
+                        <td class="py-2 text-right">-</td>
+                        <td class="py-2 text-right font-semibold" id="vouchStoneVal">₹0</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2">BIS Hallmark Fee</td>
+                        <td class="py-2 text-right">1 Pc</td>
+                        <td class="py-2 text-right font-semibold" id="vouchHallmarkVal">₹45</td>
+                    </tr>
+                    <tr class="font-bold border-t border-slate-400">
+                        <td class="py-2">Subtotal</td>
+                        <td class="py-2 text-right">-</td>
+                        <td class="py-2 text-right" id="vouchSubtotal">₹60,149</td>
+                    </tr>
+                    <tr class="text-emerald-700 font-semibold">
+                        <td class="py-2">GST (<span id="vouchGstLabel">3%</span>)</td>
+                        <td class="py-2 text-right">-</td>
+                        <td class="py-2 text-right" id="vouchGstVal">₹1,804</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="border-t-2 border-slate-900 pt-3 flex justify-between items-center">
+                <div>
+                    <span class="text-[10px] uppercase font-bold text-slate-600 block">Final Estimate</span>
+                    <span class="text-2xl font-black text-slate-950" id="vouchGrandTotal">₹61,953</span>
+                </div>
+                <div class="text-right text-[10px] text-slate-500">
+                    <p>Valid for today only.</p>
+                </div>
+            </div>
+
+            <div class="no-print pt-2 flex gap-2.5">
+                <button onclick="window.print()" class="flex-1 touch-target bg-slate-900 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-print"></i> Print / Save PDF
+                </button>
+                <button onclick="closePrintModal()" class="px-5 touch-target bg-slate-200 text-slate-800 font-bold rounded-2xl text-xs">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. ANDROID PWA MANIFEST & SERVICE WORKER
+        // ==========================================
+        (function initAndroidPWA() {
+            const manifest = {
+                name: "Sfinsys Gold Rates & Estimator",
+                short_name: "Sfinsys Gold",
+                start_url: ".",
+                display: "standalone",
+                background_color: "#090d16",
+                theme_color: "#0f172a",
+                orientation: "portrait",
+                icons: [{
+                    src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23f59e0b'/%3E%3Ctext x='256' y='340' font-size='260' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%230f172a'%3E₹%3C/text%3E%3C/svg%3E",
+                    sizes: "512x512",
+                    type: "image/svg+xml",
+                    purpose: "any maskable"
+                }]
+            };
+            const manifestStr = encodeURIComponent(JSON.stringify(manifest));
+            document.getElementById('pwa-manifest').setAttribute('href', `data:application/manifest+json,${manifestStr}`);
+
+            if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+                const swCode = `
+                    const CACHE = 'sfinsys-gold-v1';
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('fetch', e => {
+                        e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+                    });
+                `;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+            }
+        })();
+
+        // Android Install Prompt Capture
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('installAppBtn');
+            btn.classList.remove('hidden');
+            btn.classList.add('flex');
+        });
+
+        async function triggerInstallPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            document.getElementById('installAppBtn').classList.add('hidden');
+        }
+
+        // Haptic Feedback Helper for Android
+        function haptic() {
+            if (navigator.vibrate) navigator.vibrate(15);
+        }
+
+        // ==========================================
+        // 2. APP STATE & NAVIGATION
+        // ==========================================
+        let currentRates = {
+            rate24k: 7450,
+            rate22k: 6830,
+            rate18k: 5590,
+            rate14k: 4350,
+            lastUpdated: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        let selectedPurity = '22K';
+        let makingType = 'percent';
+
+        window.onload = function() {
+            const savedRates = localStorage.getItem('sfinsys_gold_rates');
+            if (savedRates) {
+                try { currentRates = JSON.parse(savedRates); } catch(e) {}
+            }
+            updateRateDisplays();
+            calculateEstimate();
+            loadGithubConfig();
+        };
+
+        function switchMainTab(tab) {
+            const homeView = document.getElementById('view-home');
+            const guideView = document.getElementById('view-guide');
+            const navHome = document.getElementById('nav-home');
+            const navGuide = document.getElementById('nav-guide');
+
+            if (tab === 'home') {
+                homeView.classList.remove('hidden');
+                guideView.classList.add('hidden');
+                navHome.className = "flex flex-col items-center justify-center gap-1 text-gold-400 font-bold";
+                navGuide.className = "flex flex-col items-center justify-center gap-1 text-slate-400";
+            } else {
+                homeView.classList.add('hidden');
+                guideView.classList.remove('hidden');
+                navGuide.className = "flex flex-col items-center justify-center gap-1 text-gold-400 font-bold";
+                navHome.className = "flex flex-col items-center justify-center gap-1 text-slate-400";
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function scrollToSummary() {
+            switchMainTab('home');
+            document.getElementById('summarySection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // ==========================================
+        // 3. CALCULATOR & RATE DISPLAYS
+        // ==========================================
+        function updateRateDisplays() {
+            document.getElementById('rate24k').innerText = currentRates.rate24k.toLocaleString('en-IN');
+            document.getElementById('rate24k-8g').innerText = (currentRates.rate24k * 8).toLocaleString('en-IN');
+
+            document.getElementById('rate22k').innerText = currentRates.rate22k.toLocaleString('en-IN');
+            document.getElementById('rate22k-8g').innerText = (currentRates.rate22k * 8).toLocaleString('en-IN');
+
+            document.getElementById('rate18k').innerText = currentRates.rate18k.toLocaleString('en-IN');
+            document.getElementById('rate18k-8g').innerText = (currentRates.rate18k * 8).toLocaleString('en-IN');
+
+            document.getElementById('lastUpdatedHeader').innerText = 'Updated: ' + (currentRates.lastUpdated || 'Today');
+        }
+
+        function setPurity(purity) {
+            selectedPurity = purity;
+            ['24K', '22K', '18K', '14K'].forEach(p => {
+                const btn = document.getElementById(`purityBtn-${p}`);
+                if (p === purity) {
+                    btn.className = "touch-target rounded-2xl border text-sm font-bold flex flex-col items-center justify-center transition-all bg-amber-500/20 border-amber-500 text-amber-300 shadow-md";
+                } else {
+                    btn.className = "touch-target rounded-2xl border border-slate-700 bg-slate-800/80 text-slate-300 text-sm font-bold flex flex-col items-center justify-center transition-all";
+                }
+            });
+            calculateEstimate();
+        }
+
+        function getRateForPurity(purity) {
+            switch(purity) {
+                case '24K': return currentRates.rate24k;
+                case '22K': return currentRates.rate22k;
+                case '18K': return currentRates.rate18k;
+                case '14K': return currentRates.rate14k || Math.round(currentRates.rate24k * 0.585);
+                default: return currentRates.rate22k;
+            }
+        }
+
+        function addWeight(val) {
+            const input = document.getElementById('netWeight');
+            let current = parseFloat(input.value) || 0;
+            input.value = Math.max(0.01, current + val).toFixed(2);
+            calculateEstimate();
+        }
+
+        function setWeight(val) {
+            document.getElementById('netWeight').value = val.toFixed(2);
+            calculateEstimate();
+        }
+
+        function setMakingType(type) {
+            makingType = type;
+            const btnPercent = document.getElementById('makingTypePercent');
+            const btnPerGram = document.getElementById('makingTypePerGram');
+            const unitLabel = document.getElementById('makingUnitLabel');
+            const valInput = document.getElementById('makingValue');
+
+            if (type === 'percent') {
+                btnPercent.className = "min-h-[34px] text-xs px-3 rounded-lg font-bold bg-gold-500 text-slate-950 transition-all";
+                btnPerGram.className = "min-h-[34px] text-xs px-3 rounded-lg font-bold text-slate-400 transition-all";
+                unitLabel.innerText = "%";
+                valInput.value = "8";
+            } else {
+                btnPerGram.className = "min-h-[34px] text-xs px-3 rounded-lg font-bold bg-gold-500 text-slate-950 transition-all";
+                btnPercent.className = "min-h-[34px] text-xs px-3 rounded-lg font-bold text-slate-400 transition-all";
+                unitLabel.innerText = "₹/g";
+                valInput.value = "450";
+            }
+            calculateEstimate();
+        }
+
+        function setMakingVal(val) {
+            document.getElementById('makingValue').value = val;
+            calculateEstimate();
+        }
+
+        function setWastageVal(val) {
+            document.getElementById('wastagePercent').value = val;
+            calculateEstimate();
+        }
+
+        function setGstRate(rate) {
+            document.getElementById('customGstRate').value = rate;
+            calculateEstimate();
+        }
+
+        function calculateEstimate() {
+            const ratePerGram = getRateForPurity(selectedPurity);
+            document.getElementById('currentPurityRate').innerText = ratePerGram.toLocaleString('en-IN');
+
+            const weight = Math.max(0, parseFloat(document.getElementById('netWeight').value) || 0);
+            const baseValue = weight * ratePerGram;
+
+            const makingVal = Math.max(0, parseFloat(document.getElementById('makingValue').value) || 0);
+            let makingAmount = makingType === 'percent' ? (baseValue * makingVal) / 100 : weight * makingVal;
+            document.getElementById('sumMakingLabel').innerText = makingType === 'percent' ? `${makingVal}%` : `₹${makingVal}/g`;
+
+            const wastagePercent = Math.max(0, parseFloat(document.getElementById('wastagePercent').value) || 0);
+            const wastageAmount = (baseValue * wastagePercent) / 100;
+
+            const stoneCharges = Math.max(0, parseFloat(document.getElementById('stoneCharges').value) || 0);
+            const hallmarkFee = Math.max(0, parseFloat(document.getElementById('hallmarkFee').value) || 0);
+
+            const subtotal = baseValue + makingAmount + wastageAmount + stoneCharges + hallmarkFee;
+
+            const isGstEnabled = document.getElementById('gstToggle').checked;
+            const customGstRate = Math.max(0, parseFloat(document.getElementById('customGstRate').value) || 0);
+            const gstToggleLabel = document.getElementById('gstToggleLabel');
+            const gstControlsBox = document.getElementById('gstControlsBox');
+
+            let gstAmount = 0;
+            if (isGstEnabled) {
+                gstAmount = (subtotal * customGstRate) / 100;
+                gstToggleLabel.innerText = "On";
+                gstToggleLabel.className = "ml-2 text-xs font-bold text-emerald-400";
+                gstControlsBox.style.opacity = "1";
+                document.getElementById('sumGstLabel').innerText = `${customGstRate}%`;
+            } else {
+                gstToggleLabel.innerText = "Off";
+                gstToggleLabel.className = "ml-2 text-xs font-bold text-slate-500";
+                gstControlsBox.style.opacity = "0.45";
+                document.getElementById('sumGstLabel').innerText = `0%`;
+            }
+
+            const grandTotal = Math.round(subtotal + gstAmount);
+            const formattedTotal = grandTotal.toLocaleString('en-IN');
+
+            document.getElementById('sumPurity').innerText = selectedPurity;
+            document.getElementById('sumWeight').innerText = weight.toFixed(2);
+            document.getElementById('sumBaseValue').innerText = Math.round(baseValue).toLocaleString('en-IN');
+            document.getElementById('sumMakingAmount').innerText = Math.round(makingAmount).toLocaleString('en-IN');
+            document.getElementById('sumWastageLabel').innerText = `${wastagePercent}%`;
+            document.getElementById('sumWastageAmount').innerText = Math.round(wastageAmount).toLocaleString('en-IN');
+            document.getElementById('sumStoneAmount').innerText = Math.round(stoneCharges).toLocaleString('en-IN');
+            document.getElementById('sumHallmarkAmount').innerText = Math.round(hallmarkFee).toLocaleString('en-IN');
+            document.getElementById('sumSubtotal').innerText = Math.round(subtotal).toLocaleString('en-IN');
+            document.getElementById('sumGstAmount').innerText = Math.round(gstAmount).toLocaleString('en-IN');
+            document.getElementById('sumGrandTotal').innerText = formattedTotal;
+            document.getElementById('navTotalBadge').innerText = `₹${formattedTotal}`;
+        }
+
+        function resetEstimator() {
+            document.getElementById('netWeight').value = "8.00";
+            document.getElementById('makingValue').value = "8";
+            document.getElementById('wastagePercent').value = "2";
+            document.getElementById('stoneCharges').value = "0";
+            document.getElementById('hallmarkFee').value = "45";
+            document.getElementById('customGstRate').value = "3.0";
+            document.getElementById('gstToggle').checked = true;
+            setPurity('22K');
+            setMakingType('percent');
+        }
+
+        // ==========================================
+        // 4. NATIVE ANDROID SHARE & VOUCHER MODAL
+        // ==========================================
+        async function shareQuoteNative() {
+            const purity = selectedPurity;
+            const weight = parseFloat(document.getElementById('netWeight').value) || 0;
+            const grandTotal = document.getElementById('sumGrandTotal').innerText;
+            const ratePerGram = getRateForPurity(purity);
+            const isGstEnabled = document.getElementById('gstToggle').checked;
+            const gstRate = isGstEnabled ? document.getElementById('customGstRate').value : "0";
+
+            const plainMessage =
+                `✨ SFINSYS GOLD ESTIMATE ✨\n` +
+                `--------------------------\n` +
+                `• Purity: ${purity} (₹${ratePerGram}/g)\n` +
+                `• Net Weight: ${weight}g\n` +
+                `• Gold Value: ₹${document.getElementById('sumBaseValue').innerText}\n` +
+                `• Making: ₹${document.getElementById('sumMakingAmount').innerText}\n` +
+                `• Wastage: ₹${document.getElementById('sumWastageAmount').innerText}\n` +
+                `• GST (${gstRate}%): ₹${document.getElementById('sumGstAmount').innerText}\n` +
+                `--------------------------\n` +
+                `💰 TOTAL ESTIMATE: ₹${grandTotal}`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Sfinsys Gold Jewellery Estimate',
+                        text: plainMessage
+                    });
+                    return;
+                } catch (err) {}
+            }
+            window.open(`https://wa.me/?text=${encodeURIComponent(plainMessage)}`, '_blank');
+        }
+
+        function openPrintModal() {
+            const now = new Date();
+            document.getElementById('vouchDate').innerText = now.toLocaleDateString('en-IN');
+            document.getElementById('vouchTime').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            document.getElementById('vouchId').innerText = `SFIN-${Math.floor(1000 + Math.random() * 9000)}`;
+
+            document.getElementById('vouchPurityRate').innerText = `${selectedPurity} @ ₹${getRateForPurity(selectedPurity).toLocaleString('en-IN')}/g`;
+            document.getElementById('vouchWeight').innerText = `${parseFloat(document.getElementById('netWeight').value || 0).toFixed(2)}g`;
+            document.getElementById('vouchBaseVal').innerText = `₹${document.getElementById('sumBaseValue').innerText}`;
+            document.getElementById('vouchMakingLabel').innerText = document.getElementById('sumMakingLabel').innerText;
+            document.getElementById('vouchMakingVal').innerText = `₹${document.getElementById('sumMakingAmount').innerText}`;
+            document.getElementById('vouchWastageLabel').innerText = document.getElementById('sumWastageLabel').innerText;
+            document.getElementById('vouchWastageVal').innerText = `₹${document.getElementById('sumWastageAmount').innerText}`;
+            document.getElementById('vouchStoneVal').innerText = `₹${document.getElementById('sumStoneAmount').innerText}`;
+            document.getElementById('vouchHallmarkVal').innerText = `₹${document.getElementById('sumHallmarkAmount').innerText}`;
+            document.getElementById('vouchSubtotal').innerText = `₹${document.getElementById('sumSubtotal').innerText}`;
+            document.getElementById('vouchGstLabel').innerText = document.getElementById('sumGstLabel').innerText;
+            document.getElementById('vouchGstVal').innerText = `₹${document.getElementById('sumGstAmount').innerText}`;
+            document.getElementById('vouchGrandTotal').innerText = `₹${document.getElementById('sumGrandTotal').innerText}`;
+
+            document.getElementById('printableVoucherModal').classList.remove('hidden');
+        }
+
+        function closePrintModal() {
+            document.getElementById('printableVoucherModal').classList.add('hidden');
+        }
+
+        // ==========================================
+        // 5. ADMIN & GITHUB SYNC
+        // ==========================================
+        function openAdminModal() {
+            document.getElementById('adminLoginModal').classList.remove('hidden');
+        }
+        function closeAdminModal() {
+            document.getElementById('adminLoginModal').classList.add('hidden');
+            document.getElementById('loginError').classList.add('hidden');
+        }
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            if (document.getElementById('adminUser').value === 'admin' && document.getElementById('adminPass').value === 'sfinsys2026') {
+                closeAdminModal();
+                openAdminPanel();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+        function openAdminPanel() {
+            document.getElementById('edit24k').value = currentRates.rate24k;
+            document.getElementById('edit22k').value = currentRates.rate22k;
+            document.getElementById('edit18k').value = currentRates.rate18k;
+            document.getElementById('adminPanelModal').classList.remove('hidden');
+        }
+        function closeAdminPanel() {
+            document.getElementById('adminPanelModal').classList.add('hidden');
+        }
+        function switchAdminTab(tab) {
+            const isRates = tab === 'rates';
+            document.getElementById('tabContent-rates').classList.toggle('hidden', !isRates);
+            document.getElementById('tabContent-github').classList.toggle('hidden', isRates);
+            document.getElementById('tabBtn-rates').className = isRates ? "min-h-[40px] rounded-xl bg-gold-500 text-slate-950" : "min-h-[40px] rounded-xl text-slate-400";
+            document.getElementById('tabBtn-github').className = !isRates ? "min-h-[40px] rounded-xl bg-gold-500 text-slate-950" : "min-h-[40px] rounded-xl text-slate-400";
+        }
+        function autoCalculateKaratRates() {
+            const r24 = parseFloat(document.getElementById('edit24k').value) || 0;
+            if (r24 > 0) {
+                document.getElementById('edit22k').value = Math.round(r24 * 0.916);
+                document.getElementById('edit18k').value = Math.round(r24 * 0.750);
+            }
+        }
+        function saveLocalRates() {
+            currentRates.rate24k = parseInt(document.getElementById('edit24k').value) || currentRates.rate24k;
+            currentRates.rate22k = parseInt(document.getElementById('edit22k').value) || currentRates.rate22k;
+            currentRates.rate18k = parseInt(document.getElementById('edit18k').value) || currentRates.rate18k;
+            currentRates.rate14k = Math.round(currentRates.rate24k * 0.585);
+            currentRates.lastUpdated = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            localStorage.setItem('sfinsys_gold_rates', JSON.stringify(currentRates));
+            updateRateDisplays();
+            calculateEstimate();
+            closeAdminPanel();
+        }
+        function downloadRatesJson() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentRates, null, 2));
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", "rates.json");
+            a.click();
+        }
+        function loadGithubConfig() {
+            document.getElementById('ghToken').value = localStorage.getItem('sfinsys_gh_token') || '';
+            document.getElementById('ghOwner').value = localStorage.getItem('sfinsys_gh_owner') || '';
+            document.getElementById('ghRepo').value = localStorage.getItem('sfinsys_gh_repo') || '';
+            document.getElementById('ghPath').value = localStorage.getItem('sfinsys_gh_path') || 'rates.json';
+        }
+        function saveGithubSettings() {
+            localStorage.setItem('sfinsys_gh_token', document.getElementById('ghToken').value.trim());
+            localStorage.setItem('sfinsys_gh_owner', document.getElementById('ghOwner').value.trim());
+            localStorage.setItem('sfinsys_gh_repo', document.getElementById('ghRepo').value.trim());
+            localStorage.setItem('sfinsys_gh_path', document.getElementById('ghPath').value.trim());
+            const status = document.getElementById('ghSyncStatus');
+            status.innerText = "Config saved locally.";
+            status.className = "text-xs p-3 rounded-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 block";
+        }
+        async function pushRatesToGithub() {
+            saveGithubSettings();
+            const token = localStorage.getItem('sfinsys_gh_token');
+            const owner = localStorage.getItem('sfinsys_gh_owner');
+            const repo = localStorage.getItem('sfinsys_gh_repo');
+            const path = localStorage.getItem('sfinsys_gh_path') || 'rates.json';
+            const status = document.getElementById('ghSyncStatus');
+
+            if (!token || !owner || !repo) {
+                status.innerText = "Token, Owner, and Repo are required.";
+                status.className = "text-xs p-3 rounded-2xl bg-rose-950/80 border border-rose-500/30 text-rose-300 block";
+                return;
+            }
+
+            status.innerText = "Pushing to GitHub...";
+            status.className = "text-xs p-3 rounded-2xl bg-slate-950 border border-slate-800 text-slate-300 block";
+
+            const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+            try {
+                let sha = null;
+                const getRes = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (getRes.ok) sha = (await getRes.json()).sha;
+
+                const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(currentRates, null, 2))));
+                const bodyData = {
+                    message: `Update rates [${new Date().toLocaleDateString()}]`,
+                    content: contentEncoded
+                };
+                if (sha) bodyData.sha = sha;
+
+                const putRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
+                });
+
+                if (putRes.ok) {
+                    status.innerText = "Live rates pushed to GitHub!";
+                    status.className = "text-xs p-3 rounded-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 block";
+                } else {
+                    const errJson = await putRes.json();
+                    status.innerText = `Failed: ${errJson.message || 'Check token'}`;
+                    status.className = "text-xs p-3 rounded-2xl bg-rose-950/80 border border-rose-500/30 text-rose-300 block";
+                }
+            } catch(err) {
+                status.innerText = `Network Error: ${err.message}`;
+                status.className = "text-xs p-3 rounded-2xl bg-rose-950/80 border border-rose-500/30 text-rose-300 block";
+            }
+        }
+        async function fetchRatesFromGithub() {
+            const syncIcon = document.getElementById('syncIcon');
+            syncIcon.classList.add('fa-spin');
+            const owner = localStorage.getItem('sfinsys_gh_owner');
+            const repo = localStorage.getItem('sfinsys_gh_repo');
+            const path = localStorage.getItem('sfinsys_gh_path') || 'rates.json';
+            let fetchUrl = owner && repo ? `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}` : 'rates.json';
+
+            try {
+                const res = await fetch(fetchUrl + '?t=' + Date.now());
+                if (res.ok) {
+                    const remoteData = await res.json();
+                    if (remoteData.rate24k) {
+                        currentRates = remoteData;
+                        localStorage.setItem('sfinsys_gold_rates', JSON.stringify(currentRates));
+                        updateRateDisplays();
+                        calculateEstimate();
+                    }
+                }
+            } catch(e) {} finally {
+                setTimeout(() => syncIcon.classList.remove('fa-spin'), 500);
+            }
+        }
+    </script>
+</body>
+</html>
